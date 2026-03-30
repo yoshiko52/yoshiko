@@ -2,6 +2,7 @@
 const YOUR_SECRET_KEY = "sk-abcdefg123456789";
 // 官方模型的密钥（去 Google AI Studio 拿）
 const GEMINI_API_KEY = "AIzaSy..."; // 这里填你自己的 Gemini 密钥
+
 export default async function handler(req, res) {
   try {
     // 验证密码
@@ -15,9 +16,6 @@ export default async function handler(req, res) {
     const { model, messages, stream } = req.body;
     if (!model) return res.status(400).send("缺少 model");
 
-    // ======================
-    // 全官方直线路由（良心版）
-    // ======================
     let targetUrl = "";
     let headers = { ...req.headers };
 
@@ -32,28 +30,27 @@ export default async function handler(req, res) {
     // Gemini 官方直连
     else if (model.startsWith("gemini")) {
       targetUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:streamGenerateContent?key=${GEMINI_API_KEY}`;
-
     }
     // 不支持的模型
     else {
       return res.status(400).send("仅支持 claude / grok / gemini");
     }
 
-    // 流式传输（一字一字蹦）
+    // 流式传输设置
     if (stream) {
       headers["Content-Type"] = "text/event-stream; charset=utf-8";
       headers["Cache-Control"] = "no-cache";
       headers["Connection"] = "keep-alive";
     }
 
-    // 转发请求（官方直连，满血，不截短，不掺水）
+    // 转发请求
     const proxyResponse = await fetch(targetUrl, {
       method: req.method,
       headers: headers,
       body: req.method === "POST" ? JSON.stringify(req.body) : undefined
     });
 
-    // 抗截断 + 流式透传
+    // 流式返回
     if (stream && proxyResponse.body) {
       res.writeHead(proxyResponse.status, headers);
       proxyResponse.body.pipe(res);
@@ -65,6 +62,7 @@ export default async function handler(req, res) {
     res.status(proxyResponse.status).json(data);
 
   } catch (err) {
-    res.status(500).send("服务错误：" + err.message);
+    res.status(500).send("服务错误: " + err.message);
   }
 }
+
