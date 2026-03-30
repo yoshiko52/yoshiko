@@ -1,8 +1,9 @@
+// 你自己设置的密码（给朋友用的 KEY）
+const YOUR_SECRET_KEY = "sk-abcdefg123456789";
+// 官方模型的密钥（去 Google AI Studio 拿）
+const GEMINI_API_KEY = "AIzaSy..."; // 这里填你自己的 Gemini 密钥
 export default async function handler(req, res) {
   try {
-    // 你自己设置的密码（给朋友用的 KEY）
-    const YOUR_SECRET_KEY = "sk-abcdefg123456789";
-
     // 验证密码
     const auth = req.headers.authorization?.replace("Bearer ", "");
     if (!auth || auth !== YOUR_SECRET_KEY) {
@@ -30,7 +31,8 @@ export default async function handler(req, res) {
     }
     // Gemini 官方直连
     else if (model.startsWith("gemini")) {
-      targetUrl = "https://generativelanguage.googleapis.com" + req.url;
+      targetUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:streamGenerateContent?key=${GEMINI_API_KEY}`;
+
     }
     // 不支持的模型
     else {
